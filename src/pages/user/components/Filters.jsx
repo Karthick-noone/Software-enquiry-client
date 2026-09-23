@@ -10,12 +10,19 @@ export default function Filters({
   setTypeFilter,
   statusFilter,
   setStatusFilter,
+  contactPersonFilter,
+  setContactPersonFilter,
+  contactPersons,
+  addedByFilter,
+  setAddedByFilter,
+  addedByNames,
   sort,
   setSort,
   dateFrom,
   setDateFrom,
   dateTo,
   setDateTo,
+  onClearAll,
 }) {
   const clearDates = () => {
     setDateFrom("");
@@ -23,6 +30,15 @@ export default function Filters({
   };
 
   const hasDates = dateFrom || dateTo;
+  const hasActiveFilters = Boolean(
+    search ||
+    typeFilter !== "All" ||
+    statusFilter !== "All" ||
+    contactPersonFilter !== "All" ||
+    addedByFilter !== "All" ||
+    sort !== "newest" ||
+    hasDates
+  );
 
   return (
     <section className="filters-row">
@@ -34,6 +50,9 @@ export default function Filters({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {search &&(
+        <X style={{cursor: "pointer"}} size={16} strokeWidth={1.75} onClick={() => setSearch("")} />
+        )}
       </div>
 
       <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
@@ -45,10 +64,47 @@ export default function Filters({
         ))}
       </select>
 
+      <select value={contactPersonFilter} onChange={(e) => setContactPersonFilter(e.target.value)}>
+        <option value="All">All contact persons</option>
+        {contactPersons.map((person) => (
+          <option key={person} value={person}>
+            {person}
+          </option>
+        ))}
+      </select>
+
+      <select value={addedByFilter} onChange={(e) => setAddedByFilter(e.target.value)}>
+        <option value="All">All added by</option>
+        {addedByNames.map((name) => <option key={name} value={name}>{name}</option>)}
+      </select>
+
       <SortDropdown sort={sort} setSort={setSort} />
 
       {/* Date Range Filters */}
-      <div className="date-filters">
+   
+      <div className="chip-row">
+        <button
+          className={statusFilter === "All" ? "chip active" : "chip"}
+          onClick={() => setStatusFilter("All")}
+        >
+          All
+        </button>
+        {STATUSES.map((s) => (
+          <button
+            key={s}
+            className={statusFilter === s ? "chip active" : "chip"}
+            style={
+              statusFilter === s
+                ? { borderColor: STATUS_COLORS[s].fg, color: STATUS_COLORS[s].fg }
+                : {}
+            }
+            onClick={() => setStatusFilter(s)}
+          >
+            {s}
+          </button>
+        ))}
+
+           <div className="date-filters">
         <div className="date-input-group">
           <label>From</label>
           <input
@@ -75,29 +131,15 @@ export default function Filters({
           </button>
         )}
       </div>
-
-      <div className="chip-row">
-        <button
-          className={statusFilter === "All" ? "chip active" : "chip"}
-          onClick={() => setStatusFilter("All")}
-        >
-          All
+    {onClearAll && hasActiveFilters && (
+        <button type="button" className="clear-filters-btn" onClick={onClearAll} title="Clear all filters">
+          <X size={15} />
+          Clear filters
         </button>
-        {STATUSES.map((s) => (
-          <button
-            key={s}
-            className={statusFilter === s ? "chip active" : "chip"}
-            style={
-              statusFilter === s
-                ? { borderColor: STATUS_COLORS[s].fg, color: STATUS_COLORS[s].fg }
-                : {}
-            }
-            onClick={() => setStatusFilter(s)}
-          >
-            {s}
-          </button>
-        ))}
+      )}
       </div>
+
+  
     </section>
   );
 }

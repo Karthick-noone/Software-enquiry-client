@@ -57,7 +57,7 @@ export default function Dashboard() {
         <PremiumTrendChart trendData={trendData} trendRange={trendRange} setTrendRange={setTrendRange} />
         <div className="panel">
           <h3>Status breakdown</h3>
-          {["New", "In Progress", "Accepted", "Hold", "Rejected", "Delivered"].map((s) => (
+          {["New","Pending", "In Progress", "Accepted", "Hold","Not Answered", "Wrong Number", "Rejected", "Delivered"].map((s) => (
             <div key={s} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid var(--rule)", fontSize: 13.5 }}>
               <span style={{ color: "var(--muted)" }}>{s}</span>
               <span style={{ fontFamily: "var(--mono-font)", color: "var(--text)" }}>{stats.byStatus?.[s] || 0}</span>

@@ -13,7 +13,8 @@ const STATUS_ICONS = {
   "Rejected": XCircle,
   "Delivered": CheckCircle,
   "Not Answered": PhoneOff,
-  "Wrong Number": AlertCircle,
+  "Wrong Number": XCircle,
+  "Pending": AlertCircle,
 };
 
 export default function StatusBadge({ status, showIcon = true }) {

@@ -1,14 +1,10 @@
 import React from "react";
-import { STATUS_COLORS } from "../../../data/constants";
+import { STATUSES, STATUS_COLORS } from "../../../data/constants";
 
 export default function StatStrip({ stats }) {
   const cols = [
     ["Total entries", stats.total, null],
-    ["In progress", stats.byStatus["In Progress"], "In Progress"],
-    ["Accepted", stats.byStatus.Accepted, "Accepted"],
-    ["On hold", stats.byStatus.Hold, "Hold"],
-    ["Delivered", stats.byStatus.Delivered, "Delivered"],
-    ["Rejected", stats.byStatus.Rejected, "Rejected"],
+    ...STATUSES.map((status) => [status, stats.byStatus[status], status]),
   ];
 
   return (

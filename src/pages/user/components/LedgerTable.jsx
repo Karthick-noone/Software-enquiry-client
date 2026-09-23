@@ -4,7 +4,7 @@ import StatusBadge from "../../../components/StatusBadge";
 import { fmtDate, fmtTime, displayBusinessType } from "../../../utils/helpers";
 
 
-export default function LedgerTable({ rows, totalCount, onEdit, onDelete, onNew }) {
+export default function LedgerTable({ rows, page, pageSize, totalCount, onEdit, onDelete, onNew }) {
   if (rows.length === 0) {
     return (
       <section className="ledger-table-wrap">
@@ -41,13 +41,14 @@ export default function LedgerTable({ rows, totalCount, onEdit, onDelete, onNew 
               {/* <th>Duration</th> */}
               <th>Call date</th>
               <th>Callback</th>
+              <th>Added By</th>
               <th aria-label="Actions">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((c, idx) => (
               <tr key={c.id}>
-                <td className="num-col mono">{String(idx + 1).padStart(2, "0")}</td>
+                <td className="num-col mono">{String((page - 1) * pageSize + idx + 1).padStart(2, "0")}</td>
                 <td>
                   <div className="cell-name">{c.name}</div>
 
@@ -123,6 +124,8 @@ export default function LedgerTable({ rows, totalCount, onEdit, onDelete, onNew 
                     "\u2014"
                   )}
                 </td>
+                <td className="cell-whoAdded">{c.created_by_name}</td>
+
                 <td>
                   <div className="row-actions">
                     <button aria-label="Edit entry" onClick={() => onEdit(c)}>

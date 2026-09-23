@@ -9,6 +9,7 @@ export const BUSINESS_TYPES = [
 ];
 
 export const STATUSES = [
+  "Pending",
   "New",
   "In Progress",
   "Accepted",
@@ -20,6 +21,7 @@ export const STATUSES = [
 ];
 
 export const STATUS_COLORS = {
+Pending: { fg: "#A94E5B", bg: "#F2DDE1" },
   New: { fg: "#5C6B65", bg: "#E7E5DC" },
   "In Progress": { fg: "#9A6D1F", bg: "#F1E3C6" },
   Accepted: { fg: "#3F6B42", bg: "#E4EBDD" },
@@ -30,4 +32,4 @@ export const STATUS_COLORS = {
   Delivered: { fg: "#2E5D6B", bg: "#DCE9EC" },
 };
 
-export const PAGE_SIZE_OPTIONS = [10, 25, 50];
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];

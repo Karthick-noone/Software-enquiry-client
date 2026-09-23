@@ -6,6 +6,36 @@ body {
   margin: 0;
   padding: 0;
 }
+.scroll-top-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper-2);
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: 0 5px 16px rgba(20, 20, 20, 0.16);
+  transition: color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.scroll-top-btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+  transform: translateY(-2px);
+}
+@media (max-width: 600px) {
+  .scroll-top-btn {
+    right: 16px;
+    bottom: 16px;
+  }
+}
 body {
   background: #d9d2bd;
   font-family: "Work Sans", sans-serif;
@@ -414,7 +444,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid var(--rule, rgba(22, 38, 43, 0.14));
+  /* border: 1px solid var(--rule, rgba(22, 38, 43, 0.14)); */
   border-radius: 4px;
   padding: 7px 10px;
   color: var(--muted, #5c6b65);
@@ -585,13 +615,19 @@ body.theme-master .table-loader-overlay {
 }
 
 /* ---------------- Extra phone number rows ---------------- */
+.phone-entry {
+  margin-top: 6px;
+}
 .phone-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
 }
 .phone-row input {
+  width: 100%;
+  min-width: 0;
+}
+.phone-row > div {
   flex: 1;
   min-width: 0;
 }
@@ -643,4 +679,44 @@ body.theme-master .table-loader-overlay {
 }
 .theme-toggle-btn:hover {
   color: var(--text);
+}
+
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-password-eye,
+input[type="password"]::-webkit-textfield-decoration-container {
+    display: none;
+}
+
+input[type="password"] {
+    -webkit-text-security: disc; /* optional, ensures bullets */
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  backdrop-filter: blur(4px);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+  background-clip: padding-box;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }

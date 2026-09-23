@@ -1,6 +1,32 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { STATUS_COLORS } from "../../../data/constants";
+import { STATUSES, STATUS_COLORS } from "../../../data/constants";
+
+function TrendTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+
+  const entries = payload.filter((item) => item.value > 0);
+  const total = payload.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+
+  return (
+    <div className="trend-tooltip-card">
+      <strong>{label}</strong>
+      {entries.map((item) => (
+        <div className="trend-tooltip-row" key={item.dataKey}>
+          <span className="trend-tooltip-status">
+            <span className="trend-tooltip-dot" style={{ background: item.color }} />
+            {item.dataKey}
+          </span>
+          <strong>{item.value}</strong>
+        </div>
+      ))}
+      <div className="trend-tooltip-total">
+        <span>Total entries</span>
+        <strong>{total}</strong>
+      </div>
+    </div>
+  );
+}
 
 export default function TrendChart({ trendData, trendRange, setTrendRange, thisWeek, thisMonth }) {
   return (
@@ -27,12 +53,16 @@ export default function TrendChart({ trendData, trendRange, setTrendRange, thisW
             <CartesianGrid vertical={false} stroke="rgba(22,38,43,0.1)" />
             <XAxis dataKey="label" tick={{ fill: "#4B5D57", fontSize: 12 }} axisLine={{ stroke: "rgba(22,38,43,0.15)" }} tickLine={false} />
             <YAxis allowDecimals={false} tick={{ fill: "#4B5D57", fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
-            <Tooltip contentStyle={{ fontSize: 13, border: "1px solid rgba(22,38,43,0.15)", borderRadius: 4 }} />
-            <Bar dataKey="Accepted" stackId="s" fill={STATUS_COLORS.Accepted.fg} />
-            <Bar dataKey="In Progress" stackId="s" fill={STATUS_COLORS["In Progress"].fg} />
-            <Bar dataKey="Hold" stackId="s" fill={STATUS_COLORS.Hold.fg} />
-            <Bar dataKey="Delivered" stackId="s" fill={STATUS_COLORS.Delivered.fg} />
-            <Bar dataKey="Rejected" stackId="s" fill={STATUS_COLORS.Rejected.fg} radius={[2, 2, 0, 0]} />
+            <Tooltip content={<TrendTooltip />} cursor={{ fill: "rgba(22,38,43,0.05)" }} />
+            {STATUSES.map((status, index) => (
+              <Bar
+                key={status}
+                dataKey={status}
+                stackId="s"
+                fill={STATUS_COLORS[status].fg}
+                radius={index === STATUSES.length - 1 ? [2, 2, 0, 0] : undefined}
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -32,7 +32,7 @@ export default function PasswordInput({ value, onChange, placeholder, required, 
           padding: 4,
         }}
       >
-        {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        {show ? <Eye size={16} /> : <EyeOff size={16} />}
       </button>
     </div>
   );

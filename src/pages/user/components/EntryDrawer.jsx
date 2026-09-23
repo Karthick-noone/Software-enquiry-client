@@ -2,17 +2,22 @@ import React from "react";
 import { X, Plus, Minus } from "lucide-react";
 import { STATUSES } from "../../../data/constants";
 import BusinessTypeField from "../../../components/BusinessTypeField.jsx";
+import CreatableAccountSelect from "../../../components/CreatableAccountSelect.jsx";
 
-export default function EntryDrawer({ form, setForm, onSave, onClose, error, saving }) {
+export default function EntryDrawer({ form, setForm, onSave, onClose, onClearError, error, saving, contactPersons }) {
+
+
   function addPhone() {
     setForm({ ...form, secondaryPhones: [...(form.secondaryPhones || []), ""] });
   }
   function updatePhone(idx, val) {
+    onClearError();
     const next = [...(form.secondaryPhones || [])];
     next[idx] = val.replace(/[^\d]/g, "").slice(0, 10);
     setForm({ ...form, secondaryPhones: next });
   }
   function removePhone(idx) {
+    onClearError();
     const next = [...(form.secondaryPhones || [])];
     next.splice(idx, 1);
     setForm({ ...form, secondaryPhones: next });
@@ -32,7 +37,7 @@ export default function EntryDrawer({ form, setForm, onSave, onClose, error, sav
         </div>
 
         <label>
-          Customer name
+          Customer name 
           <input
             type="text"
             required
@@ -68,11 +73,14 @@ export default function EntryDrawer({ form, setForm, onSave, onClose, error, sav
         </div>
 
         {(form.secondaryPhones || []).map((p, idx) => (
-          <div className="phone-row" key={idx}>
-            <input type="tel" value={p} onChange={(e) => updatePhone(idx, e.target.value)} placeholder="Additional number" />
-            <button type="button" className="phone-remove-btn" onClick={() => removePhone(idx)} aria-label="Remove number">
-              <Minus size={14} />
-            </button>
+          <div className="phone-entry" key={idx}>
+            <div className="phone-row">
+              <input type="tel" value={p} onChange={(e) => updatePhone(idx, e.target.value)} placeholder="Additional number" />
+              <button type="button" className="phone-remove-btn" onClick={() => removePhone(idx)} aria-label="Remove number">
+                <Minus size={14} />
+              </button>
+            </div>
+            {error?.field === "secondaryPhone" && error.index === idx && <span className="field-error">{error.message}</span>}
           </div>
         ))}
         <button type="button" className="phone-row" onClick={addPhone} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", width: "fit-content" }}>
@@ -93,10 +101,12 @@ export default function EntryDrawer({ form, setForm, onSave, onClose, error, sav
             {error?.field === "location" && <span className="field-error">{error.message}</span>}
           </label>
           <label>
-            Contact Person
-            <input 
-            // required 
-            type="text" value={form.contactPerson} onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} />
+            Contact Person 
+            <CreatableAccountSelect
+              value={form.contactPerson}
+              options={contactPersons}
+              onChange={(value) => setForm({ ...form, contactPerson: value })}
+            />
             {error?.field === "contactPerson" && <span className="field-error">{error.message}</span>}
           </label>
         </div>

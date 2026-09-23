@@ -9,6 +9,7 @@ import SortDropdown from "../../../components/SortDropdown.jsx";
 import ConfirmDialog from "../../../components/ConfirmDialog.jsx";
 import StatusBadge from "../../../components/StatusBadge.jsx";
 import BusinessTypeField from "../../../components/BusinessTypeField.jsx";
+import CreatableAccountSelect from "../../../components/CreatableAccountSelect.jsx";
 import TableLoader from "../../../components/TableLoader.jsx";
 import { fmtDate, fmtTime, displayBusinessType, todayISO } from "../../../utils/helpers";
 import { BUSINESS_TYPES, STATUSES } from "../../../data/constants";
@@ -23,7 +24,7 @@ const EMPTY_FORM = {
   contactPerson: "",
   businessType: BUSINESS_TYPES[0],
   customBusinessType: "",
-  status: "New",
+  status: "Pending",
   duration: "",
   notes: "",
   callDate: "",
@@ -42,6 +43,10 @@ export default function Clients() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const [typeFilter, setTypeFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [contactPersonFilter, setContactPersonFilter] = useState("All");
+  const [contactPersons, setContactPersons] = useState([]);
+  const [addedByFilter, setAddedByFilter] = useState("All");
+  const [addedByNames, setAddedByNames] = useState([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState("newest");
@@ -54,11 +59,35 @@ export default function Clients() {
   const [saving, setSaving] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
 
+  function clearAllFilters() {
+    setSearch("");
+    setTypeFilter("All");
+    setStatusFilter("All");
+    setContactPersonFilter("All");
+    setAddedByFilter("All");
+    setSort("newest");
+    setDateFrom("");
+    setDateTo("");
+  }
+
+  const hasActiveFilters = Boolean(
+    search ||
+    typeFilter !== "All" ||
+    statusFilter !== "All" ||
+    contactPersonFilter !== "All" ||
+    addedByFilter !== "All" ||
+    sort !== "newest" ||
+    dateFrom ||
+    dateTo
+  );
+
   const load = useCallback(async () => {
     const params = new URLSearchParams({
       search: debouncedSearch,
       businessType: typeFilter,
       status: statusFilter,
+      contactPerson: contactPersonFilter,
+      addedBy: addedByFilter,
       sort,
       page: String(page),
       pageSize: String(pageSize),
@@ -75,18 +104,29 @@ export default function Clients() {
     } finally {
       setTableLoading(false);
     }
-  }, [debouncedSearch, typeFilter, statusFilter, sort, page, pageSize, dateFrom, dateTo, logout, showToast]);
+  }, [debouncedSearch, typeFilter, statusFilter, contactPersonFilter, addedByFilter, sort, page, pageSize, dateFrom, dateTo, logout, showToast]);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/entries/contact-persons", { onUnauthorized: logout }),
+      apiFetch("/entries/added-by", { onUnauthorized: logout }),
+    ]).then(([persons, names]) => {
+      setContactPersons(persons);
+      setAddedByNames(names);
+    }).catch(() => { });
+  }, [logout]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, typeFilter, statusFilter, sort, pageSize, dateFrom, dateTo]);
+  }, [debouncedSearch, typeFilter, statusFilter, contactPersonFilter, addedByFilter, sort, pageSize, dateFrom, dateTo]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   function openNew() {
-    setForm({ ...EMPTY_FORM, callDate: todayISO() });
+    const defaultContactPerson = contactPersons.find((person) => person.trim().toLowerCase() === "issac") || "";
+    setForm({ ...EMPTY_FORM, contactPerson: defaultContactPerson, callDate: todayISO() });
     setError(null);
     setDrawerOpen(true);
   }
@@ -128,7 +168,7 @@ export default function Clients() {
       setDrawerOpen(false);
       load();
     } catch (err) {
-      setError({ message: err.message, field: err.field });
+      setError({ message: err.message, field: err.field, index: err.index });
     } finally {
       setSaving(false);
     }
@@ -150,11 +190,13 @@ export default function Clients() {
     setForm({ ...form, secondaryPhones: [...(form.secondaryPhones || []), ""] });
   }
   function updatePhone(idx, val) {
+    setError(null);
     const next = [...(form.secondaryPhones || [])];
     next[idx] = val.replace(/[^\d]/g, "").slice(0, 10);
     setForm({ ...form, secondaryPhones: next });
   }
   function removePhone(idx) {
+    setError(null);
     const next = [...(form.secondaryPhones || [])];
     next.splice(idx, 1);
     setForm({ ...form, secondaryPhones: next });
@@ -170,11 +212,14 @@ export default function Clients() {
           <div className="form-inline" style={{ position: "relative" }}>
             <Search size={15} style={{ position: "absolute", left: 11, color: "var(--muted)" }} />
             <input
-              style={{ paddingLeft: 32, minWidth: 200 }}
+              style={{ paddingLeft: 32, minWidth: 250 }}
               placeholder="Search name, phone or email"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {search && (
+              <X style={{ cursor: "pointer", position: "absolute", right: 11, color: "var(--muted)" }} size={16} strokeWidth={1.75} onClick={() => setSearch("")} />
+            )}
           </div>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="All">All business types</option>
@@ -192,6 +237,16 @@ export default function Clients() {
               </option>
             ))}
           </select>
+          <select value={contactPersonFilter} onChange={(e) => setContactPersonFilter(e.target.value)}>
+            <option value="All">All contact persons</option>
+            {contactPersons.map((person) => (
+              <option key={person} value={person}>{person}</option>
+            ))}
+          </select>
+          <select value={addedByFilter} onChange={(e) => setAddedByFilter(e.target.value)}>
+            <option value="All">All added by</option>
+            {addedByNames.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="From date" />
           <input min={dateFrom} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="To date" />
           {(dateFrom || dateTo) && (
@@ -207,6 +262,12 @@ export default function Clients() {
             </button>
           )}
           <SortDropdown sort={sort} setSort={setSort} />
+          {hasActiveFilters && (
+            <button type="button" className="clear-filters-btn" onClick={clearAllFilters} title="Clear all filters">
+              <X size={15} />
+              Clear filters
+            </button>
+          )}
         </div>
         <button className="btn-accent" onClick={openNew}>
           <Plus size={16} />
@@ -220,6 +281,7 @@ export default function Clients() {
           <table className="admin-table">
             <thead>
               <tr>
+                <th>S.No</th>
                 <th>Customer</th>
                 <th>Contact User</th>
                 {/* <th>Business need</th> */}
@@ -233,13 +295,16 @@ export default function Clients() {
             <tbody>
               {rows.length === 0 && !tableLoading && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>
                     No entries found.
                   </td>
                 </tr>
               )}
-              {rows.map((c) => (
+              {rows.map((c, idx) => (
                 <tr key={c.id}>
+                  <td style={{ color: "var(--muted)", fontFamily: "var(--mono-font)", fontSize: 12.5 }}>
+                    {String((page - 1) * pageSize + idx + 1).padStart(2, "0")}
+                  </td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{c.name}</div>
                     <div style={{ fontSize: 12, color: "var(--muted)" }}>
@@ -256,8 +321,8 @@ export default function Clients() {
                   <td style={{ fontSize: 12.5 }}>
                     {c.callback_date ? (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <PhoneCall size={11} /> 
-                       {fmtDate(c.callback_date)} {fmtTime(c.callback_time)}
+                        <PhoneCall size={11} />
+                        {fmtDate(c.callback_date)} {fmtTime(c.callback_time)}
                       </span>
                     ) : (
                       "\u2014"
@@ -285,7 +350,7 @@ export default function Clients() {
       {drawerOpen && (
         <div className="drawer-backdrop"
         //  onClick={() => setDrawerOpen(false)}
-         >
+        >
           <form className="drawer" onClick={(e) => e.stopPropagation()} onSubmit={saveEntry}>
             <div className="drawer-head">
               <h2>{form.id ? "Edit entry" : "New entry"}</h2>
@@ -309,37 +374,21 @@ export default function Clients() {
               </label>
               <label>
                 Email
-                <input 
-                // required 
-                type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <input
+                  // required 
+                  type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 {error?.field === "email" && <span className="field-error">{error.message}</span>}
               </label>
             </div>
-            <div className="field-pair">
-              <label>
-                Location
-                <input
-                  // required
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                />
-                {error?.field === "location" && <span className="field-error">{error.message}</span>}
-              </label>
-              <label>
-                Contact Person
-                <input
-                //  required
-                  type="text" value={form.contactPerson} onChange={(e) => setForm({ ...form, contactPerson: e.target.value })} />
-                {error?.field === "contactPerson" && <span className="field-error">{error.message}</span>}
-              </label>
-            </div>
-
             {(form.secondaryPhones || []).map((p, idx) => (
-              <div className="phone-row" key={idx}>
-                <input type="tel" value={p} onChange={(e) => updatePhone(idx, e.target.value)} placeholder="Additional number" />
-                <button type="button" className="phone-remove-btn" onClick={() => removePhone(idx)} aria-label="Remove number">
-                  <Minus size={14} />
-                </button>
+              <div className="phone-entry" key={idx}>
+                <div className="phone-row">
+                  <input type="tel" value={p} onChange={(e) => updatePhone(idx, e.target.value)} placeholder="Additional number" />
+                  <button type="button" className="phone-remove-btn" onClick={() => removePhone(idx)} aria-label="Remove number">
+                    <Minus size={14} />
+                  </button>
+                </div>
+                {error?.field === "secondaryPhone" && error.index === idx && <span className="field-error">{error.message}</span>}
               </div>
             ))}
             <button
@@ -352,6 +401,29 @@ export default function Clients() {
               </span>
               <span style={{ fontSize: 12.5, color: "var(--muted)" }}>Add another number</span>
             </button>
+            <div className="field-pair">
+              <label>
+                Location
+                <input
+                  // required
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                />
+                {error?.field === "location" && <span className="field-error">{error.message}</span>}
+              </label>
+              <label>
+                Contact Person
+                <CreatableAccountSelect
+                  value={form.contactPerson}
+                  options={contactPersons}
+                  onChange={(value) => setForm({ ...form, contactPerson: value })}
+                />
+                {error?.field === "contactPerson" && <span className="field-error">{error.message}</span>}
+              </label>
+            </div>
+
+
+
 
             <label>
               Business need

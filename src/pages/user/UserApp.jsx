@@ -25,7 +25,7 @@ const EMPTY_FORM = {
   contactPerson: "",
   businessType: BUSINESS_TYPES[0],
   customBusinessType: "",
-  status: "New",
+  status: "Pending",
   duration: "",
   notes: "",
   callDate: "",
@@ -48,10 +48,14 @@ export default function UserApp() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const [typeFilter, setTypeFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [contactPersonFilter, setContactPersonFilter] = useState("All");
+  const [contactPersons, setContactPersons] = useState([]);
+  const [addedByFilter, setAddedByFilter] = useState("All");
+  const [addedByNames, setAddedByNames] = useState([]);
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  
+
   // Date filter states
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -63,20 +67,34 @@ export default function UserApp() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  function clearAllFilters() {
+    setSearch("");
+    setTypeFilter("All");
+    setStatusFilter("All");
+    setContactPersonFilter("All");
+    setAddedByFilter("All");
+    setSort("newest");
+    setDateFrom("");
+    setDateTo("");
+  }
+
+
   const loadEntries = useCallback(async () => {
     const params = new URLSearchParams({
       search: debouncedSearch,
       businessType: typeFilter,
       status: statusFilter,
+      contactPerson: contactPersonFilter,
+      addedBy: addedByFilter,
       sort,
       page: String(page),
       pageSize: String(pageSize),
     });
-    
+
     // Add date filters to params if they exist
     if (dateFrom) params.append("dateFrom", dateFrom);
     if (dateTo) params.append("dateTo", dateTo);
-    
+
     setTableLoading(true);
     try {
       const res = await apiFetch(`/entries?${params}`, { onUnauthorized: logout });
@@ -87,7 +105,17 @@ export default function UserApp() {
     } finally {
       setTableLoading(false);
     }
-  }, [debouncedSearch, typeFilter, statusFilter, sort, page, pageSize, dateFrom, dateTo, logout, showToast]);
+  }, [debouncedSearch, typeFilter, statusFilter, contactPersonFilter, addedByFilter, sort, page, pageSize, dateFrom, dateTo, logout, showToast]);
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch("/entries/contact-persons", { onUnauthorized: logout }),
+      apiFetch("/entries/added-by", { onUnauthorized: logout }),
+    ]).then(([persons, names]) => {
+      setContactPersons(persons);
+      setAddedByNames(names);
+    }).catch(() => {});
+  }, [logout]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -110,7 +138,7 @@ export default function UserApp() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, typeFilter, statusFilter, sort, pageSize, dateFrom, dateTo]);
+  }, [debouncedSearch, typeFilter, statusFilter, contactPersonFilter, addedByFilter, sort, pageSize, dateFrom, dateTo]);
 
   useEffect(() => {
     loadEntries();
@@ -122,7 +150,8 @@ export default function UserApp() {
   }, [loadStats, loadTrend, refreshKey]);
 
   function openNew() {
-    setForm({ ...EMPTY_FORM, callDate: todayISO() });
+    const defaultContactPerson = contactPersons.find((person) => person.trim().toLowerCase() === "issac") || "";
+    setForm({ ...EMPTY_FORM, contactPerson: defaultContactPerson, callDate: todayISO() });
     setFormError(null);
     setDrawerOpen(true);
   }
@@ -154,10 +183,12 @@ export default function UserApp() {
     setSaving(true);
     setFormError(null);
     try {
+
       if (form.id) {
         await apiFetch(`/entries/${form.id}`, { method: "PUT", body: form, onUnauthorized: logout });
         showToast("Entry updated.");
       } else {
+
         await apiFetch("/entries", { method: "POST", body: form, onUnauthorized: logout });
         showToast("Entry added to the ledger.");
       }
@@ -165,7 +196,7 @@ export default function UserApp() {
       loadEntries();
       setRefreshKey((k) => k + 1);
     } catch (err) {
-      setFormError({ message: err.message, field: err.field });
+      setFormError({ message: err.message, field: err.field, index: err.index });
     } finally {
       setSaving(false);
     }
@@ -203,6 +234,13 @@ export default function UserApp() {
         setTypeFilter={setTypeFilter}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        contactPersonFilter={contactPersonFilter}
+        setContactPersonFilter={setContactPersonFilter}
+        contactPersons={contactPersons}
+        addedByFilter={addedByFilter}
+        setAddedByFilter={setAddedByFilter}
+        addedByNames={addedByNames}
+        onClearAll={clearAllFilters}
         sort={sort}
         setSort={setSort}
         dateFrom={dateFrom}
@@ -212,7 +250,7 @@ export default function UserApp() {
       />
       <div className="table-relative">
         <TableLoader active={tableLoading} />
-        <LedgerTable rows={rows} totalCount={total} onEdit={openEdit} onDelete={setPendingDelete} onNew={openNew} />
+        <LedgerTable rows={rows} page={page} pageSize={pageSize} totalCount={total} onEdit={openEdit} onDelete={setPendingDelete} onNew={openNew} />
       </div>
       <Pagination
         page={page}
@@ -228,8 +266,10 @@ export default function UserApp() {
           setForm={setForm}
           onSave={saveEntry}
           onClose={() => setDrawerOpen(false)}
+          onClearError={() => setFormError(null)}
           error={formError}
           saving={saving}
+          contactPersons={contactPersons}
         />
       )}
 

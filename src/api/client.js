@@ -10,10 +10,11 @@ export function setToken(token) {
 }
 
 class ApiError extends Error {
-  constructor(message, status, field) {
+  constructor(message, status, field, index) {
     super(message);
     this.status = status;
     this.field = field;
+    this.index = index;
   }
 }
 
@@ -41,7 +42,7 @@ export async function apiFetch(path, { method = "GET", body, onUnauthorized } = 
   }
 
   if (!res.ok) {
-    throw new ApiError(data?.error || "Something went wrong.", res.status, data?.field);
+    throw new ApiError(data?.error || "Something went wrong.", res.status, data?.field, data?.index);
   }
   return data;
 }

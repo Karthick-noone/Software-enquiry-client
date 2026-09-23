@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { PAGE_SIZE_OPTIONS } from "../data/constants";
 
 export default function Pagination({ page, pageSize, total, onPageChange, onPageSizeChange }) {
@@ -23,6 +23,9 @@ export default function Pagination({ page, pageSize, total, onPageChange, onPage
         {start}{"\u2013"}{end} of {total}
       </div>
       <div className="page-controls">
+        <button disabled={page <= 1} onClick={() => onPageChange(1)} aria-label="First page">
+          <ChevronsLeft size={16} />
+        </button>
         <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} aria-label="Previous page">
           <ChevronLeft size={16} />
         </button>
@@ -31,6 +34,9 @@ export default function Pagination({ page, pageSize, total, onPageChange, onPage
         </span>
         <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} aria-label="Next page">
           <ChevronRight size={16} />
+        </button>
+        <button disabled={page >= totalPages} onClick={() => onPageChange(totalPages)} aria-label="Last page">
+          <ChevronsRight size={16} />
         </button>
       </div>
     </div>

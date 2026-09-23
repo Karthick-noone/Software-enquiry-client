@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { ArrowUp } from "lucide-react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import PageLoader from "./components/PageLoader.jsx";
@@ -52,12 +53,51 @@ function GlobalReminder() {
   return <CallbackReminder />;
 }
 
+function ScrollToTopButton() {
+  const { user } = useAuth();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const scrollContainer = document.querySelector(".shell-content");
+    const getScrollTop = () => scrollContainer?.scrollTop ?? window.scrollY;
+    const handleScroll = () => setVisible(getScrollTop() > 280);
+    const target = scrollContainer || window;
+    target.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => target.removeEventListener("scroll", handleScroll);
+  }, [user]);
+
+  if (!user || !visible) return null;
+
+  return (
+    <button
+      type="button"
+      className="scroll-top-btn"
+      onClick={() => {
+        const scrollContainer = document.querySelector(".shell-content");
+        if (scrollContainer) {
+          scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }}
+      aria-label="Scroll to top"
+      title="Scroll to top"
+    >
+      <ArrowUp size={17} strokeWidth={1.9} />
+    </button>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <BodyTheme />
         <GlobalReminder />
+        <ScrollToTopButton />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<RootRedirect />} />
